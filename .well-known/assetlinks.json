@@ -2,7 +2,7 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "com.yayasworld.twa",
-    "sha256_cert_fingerprints": ["D7:6D:43:29:85:0A:7E:4C:87:87:35:7A:AC:74:07:CC:8B:13:26:6B:DD:FC:C4:09:22:D9:43:6C:1D:5D:D5:76"]
+    "package_name": "io.github.yayasworld.twa",
+    "sha256_cert_fingerprints": ["A2:86:62:CD:C9:49:D0:43:DE:C7:88:03:DE:99:81:61:4F:DB:ED:A0:85:DC:75:4E:B4:5B:15:46:BF:4D:EF:39"]
   }
 }]
