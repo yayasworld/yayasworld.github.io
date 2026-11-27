@@ -105,6 +105,48 @@
   // ---------- social: friends, chat, block, report ----------
   function myCode() { return uid; }
 
+  function signInGoogle(cb) {
+    if (!auth) { cb && cb(false, 'net'); return; }
+    var provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).then(function (cred) {
+      uid = cred.user.uid; ready = true;
+      db.ref('players/' + uid).update({ lastActive: firebase.database.ServerValue.TIMESTAMP });
+      cb && cb(true);
+    }).catch(function (e) { cb && cb(false, (e && e.code) || 'err'); });
+  }
+
+  function linkGoogle(cb) {
+    if (!auth || !auth.currentUser) { cb && cb(false, 'net'); return; }
+    var provider = new firebase.auth.GoogleAuthProvider();
+    auth.currentUser.linkWithPopup(provider).then(function () {
+      cb && cb(true);
+    }).catch(function (e) { cb && cb(false, (e && e.code) || 'err'); });
+  }
+
+  function isAnonymous() { return auth && auth.currentUser ? auth.currentUser.isAnonymous : true; }
+
+  function onRequests(cb) {
+    if (!ready) return function () {};
+    var ref = db.ref('friend_requests/' + uid);
+    var h = ref.on('value', function (snap) {
+      var out = [];
+      snap.forEach(function (c) { out.push({ from: c.key, name: (c.val() && c.val().name) || 'لاعب', ts: (c.val() && c.val().ts) || 0 }); });
+      cb(out);
+    }, function () { cb([]); });
+    return function () { ref.off('value', h); };
+  }
+
+  function onFriends(cb) {
+    if (!ready) return function () {};
+    var ref = db.ref('friends/' + uid);
+    var h = ref.on('value', function (snap) {
+      var out = [];
+      snap.forEach(function (c) { out.push({ uid: c.key, name: (c.val() && c.val().name) || 'لاعب' }); });
+      cb(out);
+    }, function () { cb([]); });
+    return function () { ref.off('value', h); };
+  }
+
   function chatIdWith(other) { return [uid, other].sort().join('_'); }
 
   function sendFriendRequest(toUid, myName, cb) {
@@ -195,6 +237,8 @@
     sendFriendRequest: sendFriendRequest, listRequests: listRequests,
     acceptRequest: acceptRequest, declineRequest: declineRequest,
     listFriends: listFriends, sendChat: sendChat, onChat: onChat,
-    blockUser: blockUser, reportUser: reportUser
+    blockUser: blockUser, reportUser: reportUser,
+    signInGoogle: signInGoogle, linkGoogle: linkGoogle, isAnonymous: isAnonymous,
+    onRequests: onRequests, onFriends: onFriends
   };
 })(typeof window !== 'undefined' ? window : this);

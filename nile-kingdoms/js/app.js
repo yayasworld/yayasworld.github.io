@@ -508,6 +508,7 @@
     document.querySelectorAll('.tab').forEach(function (t) {
       t.classList.toggle('active', t.dataset.tab === name);
     });
+    if (name === 'friends') watchFriends(); else unwatchFriends();
     renderAll();
   }
   document.querySelectorAll('.tab').forEach(function (t) {
@@ -554,12 +555,16 @@
     $('m-age-no').addEventListener('click', function () { closeModal(); switchTab('village'); });
   }
 
+  var reqUnsub = null, friendsUnsub = null;
+
   function renderFriends() {
     if (!NET || !NET.isReady()) {
       $('my-code').textContent = 'الأونلاين مش متاح دلوقتي';
       return;
     }
     $('my-code').textContent = NET.myCode();
+    var linkBtn = $('btn-link-google');
+    if (linkBtn) linkBtn.classList.toggle('hidden', !NET.isAnonymous());
     NET.listRequests(function (reqs) {
       var el = $('request-list');
       el.innerHTML = reqs.length ? '' : '<p class="muted">مفيش طلبات</p>';
@@ -592,6 +597,18 @@
         el.appendChild(c);
       });
     });
+  }
+
+  function watchFriends() {
+    unwatchFriends();
+    if (!NET || !NET.isReady()) return;
+    reqUnsub = NET.onRequests(function () { if (tab === 'friends') renderFriends(); });
+    friendsUnsub = NET.onFriends(function () { if (tab === 'friends') renderFriends(); });
+  }
+
+  function unwatchFriends() {
+    if (reqUnsub) { reqUnsub(); reqUnsub = null; }
+    if (friendsUnsub) { friendsUnsub(); friendsUnsub = null; }
   }
 
   function openChat(f) {
@@ -751,6 +768,21 @@
   });
   $('input-name').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') $('btn-start').click();
+  });
+  $('btn-google').addEventListener('click', function () {
+    if (!NET || !NET.isReady()) { toast('الأونلاين مش متاح دلوقتي، جرّب كضيف'); return; }
+    NET.signInGoogle(function (ok, err) {
+      if (ok) toast('سجّلت بجوجل ✓ اكتب اسم قائدك وابدأ');
+      else if (err !== 'auth/popup-closed-by-user') toast('التسجيل بجوجل مفعّلش، جرّب تاني');
+    });
+  });
+  $('btn-link-google').addEventListener('click', function () {
+    if (!NET || !NET.isReady()) return;
+    NET.linkGoogle(function (ok, err) {
+      if (ok) { toast('اتربط حسابك بجوجل ✓ تقدر تكمل على أي جهاز'); $('btn-link-google').classList.add('hidden'); }
+      else if (err === 'auth/credential-already-in-use') toast('حساب جوجل ده مربوط بلاعب تاني');
+      else if (err !== 'auth/popup-closed-by-user') toast('الربط مفعّلش، جرّب تاني');
+    });
   });
 
   boot();
