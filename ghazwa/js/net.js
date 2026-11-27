@@ -43,6 +43,7 @@
       buildings: state.buildings.map(function (b) { return { type: b.type, x: b.x, y: b.y, lvl: b.lvl }; }),
       res: { gold: Math.floor(state.res.gold), food: Math.floor(state.res.food) },
       stats: { attacks: state.stats.attacks || 0, wins: state.stats.wins || 0, stars: state.stats.stars_won || 0 },
+      createdAt: state.createdAt || null,
       updatedAt: firebase.database.ServerValue.TIMESTAMP
     };
   }

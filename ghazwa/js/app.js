@@ -273,11 +273,12 @@
       var st = '';
       for (var i = 0; i < 4; i++) st += i < e2.palaceLvl ? '★' : '☆';
       var loot = (e2.snapshot && e2.snapshot.res) ? e2.snapshot.res : { gold: 0, food: 0 };
+      var shielded = e2.snapshot && e2.snapshot.createdAt && (Date.now() - e2.snapshot.createdAt < 86400000);
       card.innerHTML = '<span class="k-emoji">👤</span>' +
         '<div class="grow"><b>' + e2.name + ' (لاعب حقيقي)</b><div class="stars">' + st + '</div>' +
-        '<div class="muted">غنيمة متوقعة: 🪙' + fmt(loot.gold * D.LOOT_RATIO) + ' 🌾' + fmt(loot.food * D.LOOT_RATIO) + '</div></div>' +
-        '<button class="btn btn-small btn-danger">غزوة ⚔️</button>';
-      card.querySelector('button').addEventListener('click', function () { attackPrep(e2); });
+        '<div class="muted">' + (shielded ? '🛡️ لاعب جديد تحت الحماية (٢٤ ساعة)' : 'غنيمة متوقعة: 🪙' + fmt(loot.gold * D.LOOT_RATIO) + ' 🌾' + fmt(loot.food * D.LOOT_RATIO)) + '</div></div>' +
+        (shielded ? '<span class="pill">🛡️ حماية</span>' : '<button class="btn btn-small btn-danger">غزوة ⚔️</button>');
+      if (!shielded) card.querySelector('button').addEventListener('click', function () { attackPrep(e2); });
       list.appendChild(card);
     });
     mapEntries.forEach(function (e2) {
@@ -498,6 +499,7 @@
       $('screen-' + s).classList.toggle('hidden', s !== name);
     });
     $('hud').classList.toggle('hidden', name === 'start' || name === 'battle');
+    $('hud-frieze').classList.toggle('hidden', name === 'start' || name === 'battle');
     $('tabbar').classList.toggle('hidden', name === 'start' || name === 'battle');
   }
   function switchTab(name) {

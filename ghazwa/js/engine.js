@@ -17,6 +17,7 @@
       training: [],        // [{troop, count, readyAt}]
       missions: null,      // {day, items:[...]}
       bestStars: {},       // map entry id -> best star count
+      createdAt: now(),    // beginner shield: new villages are protected for 24h
       stats: { gold_collected: 0, food_collected: 0, troops_trained: 0, buildings_done: 0, attacks: 0, stars_won: 0, gold_looted: 0, wins: 0 },
       lastTick: now()
     };
