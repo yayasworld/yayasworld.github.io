@@ -1,4 +1,4 @@
-/* غزوة - core engine: state, economy, timers, missions. No DOM. Node-testable. */
+/* ممالك النيل - core engine: state, economy, timers, missions. No DOM. Node-testable. */
 (function (global) {
   'use strict';
   var DATA = (typeof module !== 'undefined') ? require('./data.js') : global.GhazwaData;

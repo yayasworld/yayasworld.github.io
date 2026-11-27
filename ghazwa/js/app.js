@@ -1,4 +1,4 @@
-/* غزوة - UI controller. */
+/* ممالك النيل - UI controller. */
 (function () {
   'use strict';
   var D = window.GhazwaData, E = window.GhazwaEngine, BT = window.GhazwaBattle, AI = window.GhazwaAI;

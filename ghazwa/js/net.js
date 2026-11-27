@@ -1,4 +1,4 @@
-/* غزوة - online layer (Firebase Auth anonymous + Realtime Database).
+/* ممالك النيل - online layer (Firebase Auth anonymous + Realtime Database).
    Loads only when a config is present; game works fully offline without it.
    Data model:
      /villages/{uid}            public village snapshot for attacks & map
@@ -8,7 +8,15 @@
 (function (global) {
   'use strict';
   // filled after Firebase console setup (project: ghazwa, Yaya Google account)
-  var CONFIG = null; /* { apiKey, authDomain, databaseURL, projectId, appId } */
+  var CONFIG = {
+    apiKey: 'AIzaSyBcNihvhcGLMhlqZc-RWdqEZyflzt_rPPA',
+    authDomain: 'ghazwa-65255.firebaseapp.com',
+    databaseURL: 'https://ghazwa-65255-default-rtdb.europe-west1.firebasedatabase.app',
+    projectId: 'ghazwa-65255',
+    storageBucket: 'ghazwa-65255.firebasestorage.app',
+    messagingSenderId: '103710511562',
+    appId: '1:103710511562:web:96c820b598ad2e398c3f33'
+  };
 
   var app = null, db = null, auth = null, uid = null, ready = false;
   var listeners = [];

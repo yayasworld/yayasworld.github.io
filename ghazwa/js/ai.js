@@ -1,4 +1,4 @@
-/* غزوة - AI opponents: names, village generator, kingdom map. Original content. */
+/* ممالك النيل - AI opponents: names, village generator, kingdom map. Original content. */
 (function (global) {
   'use strict';
   var DATA = (typeof module !== 'undefined') ? require('./data.js') : global.GhazwaData;

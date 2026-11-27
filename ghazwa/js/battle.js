@@ -1,4 +1,4 @@
-/* غزوة - battle simulator. Deterministic given seed; produces replayable frames. No DOM. */
+/* ممالك النيل - battle simulator. Deterministic given seed; produces replayable frames. No DOM. */
 (function (global) {
   'use strict';
   var DATA = (typeof module !== 'undefined') ? require('./data.js') : global.GhazwaData;

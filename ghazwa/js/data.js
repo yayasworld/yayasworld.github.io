@@ -1,4 +1,4 @@
-/* غزوة - static game data. Original content, no copied assets. */
+/* ممالك النيل - static game data. Original content, no copied assets. */
 (function (global) {
   'use strict';
 
