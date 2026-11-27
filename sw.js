@@ -1,5 +1,5 @@
-const V = 'yw-main-NC5AGEVA.js';
-const SHELL = ["./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png","./index.html","./main-G5D6MPWL.css","./main-NC5AGEVA.js","./manifest.webmanifest"];
+const V = 'yw-main-MZIBV2AQ.js';
+const SHELL = ["./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png","./index.html","./main-2GLFNUZN.css","./main-MZIBV2AQ.js","./manifest.webmanifest"];
 self.addEventListener('install', (e) => {
     self.skipWaiting();
     e.waitUntil(caches.open(V).then((c) => c.addAll(SHELL)));
