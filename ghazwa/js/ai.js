@@ -13,8 +13,14 @@
     'أسد الحرب', 'فارس الغروب', 'درة المدائن', 'صخرة الزمن'
   ];
 
+  var ARCHS = {
+    farmer:   { label: 'مزارع 🧑‍🌾', lootMult: 1.4, towers: -1 },
+    defender: { label: 'حصين 🛡️', lootMult: 0.8, towers: 1 },
+    rich:     { label: 'غني 💰', lootMult: 2.0, towers: 0 }
+  };
+
   // Build a plausible village for a given palace level using seeded RNG.
-  function genVillage(seed, palaceLvl) {
+  function genVillage(seed, palaceLvl, arch) {
     var rnd = mulberry32(seed >>> 0);
     var buildings = [];
     var occupied = {};
@@ -38,11 +44,14 @@
     // palace near center
     buildings.push({ type: 'palace', x: 6 + Math.floor(rnd() * 2), y: 6 + Math.floor(rnd() * 2), lvl: palaceLvl });
     function L() { return 1 + Math.floor(rnd() * palaceLvl); } // random level up to palace lvl
+    var nTowers = Math.max(0, (palaceLvl >= 2 ? 1 : 0) + (palaceLvl >= 3 ? 1 : 0) + (palaceLvl >= 4 ? 1 : 0) + (arch && ARCHS[arch] ? ARCHS[arch].towers : 0));
     put('mine', L()); put('farm', L());
-    if (palaceLvl >= 2) { put('storage', L()); put('tower', L()); }
-    if (palaceLvl >= 3) { put('mine', L()); put('tower', L()); put('barracks', L()); }
-    if (palaceLvl >= 4) { put('farm', L()); put('tower', L()); put('wall', L()); put('wall', L()); }
+    if (palaceLvl >= 2) { put('storage', L()); }
+    for (var tw = 0; tw < nTowers; tw++) put('tower', L());
+    if (palaceLvl >= 3) { put('mine', L()); put('barracks', L()); }
+    if (palaceLvl >= 4) { put('farm', L()); put('wall', L()); put('wall', L()); }
     var lootBase = 400 * palaceLvl + Math.floor(rnd() * 300 * palaceLvl);
+    if (arch && ARCHS[arch]) lootBase = Math.round(lootBase * ARCHS[arch].lootMult);
     return { buildings: buildings, loot: { gold: lootBase, food: lootBase } };
   }
 
@@ -55,10 +64,12 @@
       var ni = Math.floor(rnd() * names.length);
       var name = names.splice(ni, 1)[0] || ('مملكة ' + (i + 1));
       var palaceLvl = 1 + Math.floor(rnd() * 4);
+      var archKeys = Object.keys(ARCHS);
       entries.push({
         id: 'ai-' + i,
         kind: 'ai',
         name: name,
+        arch: archKeys[i % archKeys.length],
         x: Math.round(6 + rnd() * 88),
         y: Math.round(6 + rnd() * 88),
         palaceLvl: palaceLvl,
@@ -70,7 +81,7 @@
     return entries;
   }
 
-  var api = { AI_NAMES: AI_NAMES, genVillage: genVillage, genMap: genMap };
+  var api = { AI_NAMES: AI_NAMES, ARCHS: ARCHS, genVillage: genVillage, genMap: genMap };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.GhazwaAI = api;
 })(typeof window !== 'undefined' ? window : this);

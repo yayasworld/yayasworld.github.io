@@ -13,9 +13,10 @@
       res: { gold: DATA.START.gold, food: DATA.START.food },
       coins: DATA.START.coins,
       buildings: [], nextBId: 1,
-      troops: { soldier: 0, archer: 0, knight: 0 },
+      troops: { soldier: 5, archer: 0, knight: 0 },
       training: [],        // [{troop, count, readyAt}]
       missions: null,      // {day, items:[...]}
+      bestStars: {},       // map entry id -> best star count
       stats: { gold_collected: 0, food_collected: 0, troops_trained: 0, buildings_done: 0, attacks: 0, stars_won: 0, gold_looted: 0, wins: 0 },
       lastTick: now()
     };

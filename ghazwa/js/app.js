@@ -33,7 +33,12 @@
     clearTimeout(toast._h);
     toast._h = setTimeout(function () { t.classList.add('hidden'); }, 2200);
   }
-  function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {} }
+  var NET = window.GhazwaNet;
+
+  function save() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {}
+    if (NET && NET.isReady()) NET.sync(state, D, E);
+  }
   function load() {
     try {
       var raw = localStorage.getItem(SAVE_KEY);
@@ -251,20 +256,42 @@
 
   // ---------- map ----------
   var mapEntries = null;
+  var onlineEntries = [];
   function renderMap() {
     if (!mapEntries) mapEntries = AI.genMap(MAP_SEED, state.name);
     var list = $('map-list');
     list.innerHTML = '';
-    mapEntries.forEach(function (e2) {
-      if (e2.kind === 'player') return;
-      var v = AI.genVillage(e2.villageSeed, e2.palaceLvl);
+    if (NET && NET.isReady()) {
+      NET.fetchKingdoms(function (real) {
+        onlineEntries = real;
+        renderMap();
+      });
+    }
+    onlineEntries.forEach(function (e2) {
       var card = document.createElement('div');
       card.className = 'card kingdom';
       var st = '';
       for (var i = 0; i < 4; i++) st += i < e2.palaceLvl ? '★' : '☆';
+      var loot = (e2.snapshot && e2.snapshot.res) ? e2.snapshot.res : { gold: 0, food: 0 };
+      card.innerHTML = '<span class="k-emoji">👤</span>' +
+        '<div class="grow"><b>' + e2.name + ' (لاعب حقيقي)</b><div class="stars">' + st + '</div>' +
+        '<div class="muted">غنيمة متوقعة: 🪙' + fmt(loot.gold * D.LOOT_RATIO) + ' 🌾' + fmt(loot.food * D.LOOT_RATIO) + '</div></div>' +
+        '<button class="btn btn-small btn-danger">غزوة ⚔️</button>';
+      card.querySelector('button').addEventListener('click', function () { attackPrep(e2); });
+      list.appendChild(card);
+    });
+    mapEntries.forEach(function (e2) {
+      if (e2.kind === 'player') return;
+      var v = AI.genVillage(e2.villageSeed, e2.palaceLvl, e2.arch);
+      var card = document.createElement('div');
+      card.className = 'card kingdom';
+      var st = '';
+      for (var i = 0; i < 4; i++) st += i < e2.palaceLvl ? '★' : '☆';
+      var best = (state.bestStars || {})[e2.id] || 0;
+      var bestTxt = best ? ' · أفضل نتيجة: ' + '⭐'.repeat(best) : '';
       card.innerHTML = '<span class="k-emoji">🏯</span>' +
-        '<div class="grow"><b>' + e2.name + '</b><div class="stars">' + st + '</div>' +
-        '<div class="muted">غنيمة متوقعة: 🪙' + fmt(v.loot.gold * D.LOOT_RATIO) + ' 🌾' + fmt(v.loot.food * D.LOOT_RATIO) + '</div></div>' +
+        '<div class="grow"><b>' + e2.name + ' <span class="pill">' + AI.ARCHS[e2.arch].label + '</span></b><div class="stars">' + st + '</div>' +
+        '<div class="muted">غنيمة متوقعة: 🪙' + fmt(v.loot.gold * D.LOOT_RATIO) + ' 🌾' + fmt(v.loot.food * D.LOOT_RATIO) + bestTxt + '</div></div>' +
         '<button class="btn btn-small btn-danger">غزوة ⚔️</button>';
       card.querySelector('button').addEventListener('click', function () { attackPrep(e2); });
       list.appendChild(card);
@@ -275,7 +302,9 @@
   function attackPrep(entry) {
     var used = E.armyUsed(state);
     if (used <= 0) { toast('جيشك فاضي، درّب جنود الأول ⚔️'); switchTab('army'); return; }
-    var v = AI.genVillage(entry.villageSeed, entry.palaceLvl);
+    var v = entry.kind === 'player'
+      ? { buildings: entry.snapshot.buildings, loot: entry.snapshot.res || { gold: 0, food: 0 } }
+      : AI.genVillage(entry.villageSeed, entry.palaceLvl, entry.arch);
     var html = '<h3>غزوة على ' + entry.name + '</h3>' +
       '<p class="muted">هتبعت كل جيشك الجاهز. اللي ينجو يرجع معاك.</p>' +
       '<div class="card"><div class="muted">الغنيمة عند التدمير الكامل:</div>' +
@@ -386,20 +415,29 @@
     var r = battle.sim.result;
     clearInterval(battle.iv);
     // apply outcome
-    Object.keys(r.survivors).forEach(function (k) { state.troops[k] += r.survivors[k]; });
+    // loot is capped by what the surviving army can carry (100 + 20 per survivor)
+    var survivorCount = 0;
+    Object.keys(r.survivors).forEach(function (k) { survivorCount += r.survivors[k]; state.troops[k] += r.survivors[k]; });
+    var carry = 100 + survivorCount * 20;
+    var gotGold = Math.min(r.loot.gold, carry), gotFood = Math.min(r.loot.food, carry);
     var cap = E.storageCap(state);
-    state.res.gold = Math.min(cap, state.res.gold + r.loot.gold);
-    state.res.food = Math.min(cap, state.res.food + r.loot.food);
-    E.track(state, 'gold_looted', r.loot.gold);
+    state.res.gold = Math.min(cap, state.res.gold + gotGold);
+    state.res.food = Math.min(cap, state.res.food + gotFood);
+    E.track(state, 'gold_looted', gotGold);
     E.track(state, 'stars_won', r.stars);
     if (r.stars > 0) E.track(state, 'wins', 1);
+    if (!state.bestStars) state.bestStars = {};
+    if (battle.entry && r.stars > (state.bestStars[battle.entry.id] || 0)) state.bestStars[battle.entry.id] = r.stars;
+    if (battle.entry && battle.entry.kind === 'player' && NET && NET.isReady()) {
+      NET.reportAttack(battle.entry.id, state, r);
+    }
     save();
     var stars = '';
     for (var i = 0; i < 3; i++) stars += i < r.stars ? '⭐' : '▫️';
     var html = '<h3 style="text-align:center">' + (r.stars > 0 ? 'نصر! 🎉' : 'هزيمة… 💀') + '</h3>' +
       '<div class="result-stars">' + stars + '</div>' +
       '<div class="result-line">التدمير: ' + r.pct + '%</div>' +
-      '<div class="result-line">الغنيمة: 🪙' + r.loot.gold + ' · 🌾' + r.loot.food + '</div>' +
+      '<div class="result-line">الغنيمة: 🪙' + gotGold + ' · 🌾' + gotFood + '</div>' +
       '<div class="modal-actions"><button class="btn btn-primary" id="m-back">ارجع للقرية 🏰</button></div>';
     battle = null;
     openModal(html);
@@ -450,6 +488,9 @@
     $('m-close').addEventListener('click', closeModal);
   }
   $('btn-store').addEventListener('click', storeModal);
+  $('btn-skip').addEventListener('click', function () {
+    if (battle) { clearInterval(battle.iv); battle.frame = battle.sim.frames.length - 1; endBattle(); }
+  });
 
   // ---------- navigation ----------
   function showScreen(name) {
@@ -500,6 +541,30 @@
   }, 1000);
   setInterval(save, 10000);
 
+  // ---------- online boot ----------
+  function netBoot() {
+    if (!NET) return;
+    NET.init(function (okNet) {
+      if (!okNet) return;
+      save();
+      NET.applyIncoming(state, function (reports) {
+        if (!reports.length) return;
+        var g = 0, f = 0;
+        reports.forEach(function (a) { g += a.lootGold || 0; f += a.lootFood || 0; });
+        state.res.gold = Math.max(0, state.res.gold - g);
+        state.res.food = Math.max(0, state.res.food - f);
+        save(); renderAll();
+        var last = reports[reports.length - 1];
+        openModal('<h3 style="text-align:center">اتهاجمت! 🛡️</h3>' +
+          '<p class="result-line">' + reports.length + ' غزوة على قريتك وانت مش موجود</p>' +
+          '<p class="result-line">آخر مهاجم: ' + (last.name || 'مجهول') + ' (' + (last.pct || 0) + '%)</p>' +
+          '<p class="result-line">خسرت: 🪙' + g + ' · 🌾' + f + '</p>' +
+          '<div class="modal-actions"><button class="btn btn-primary" id="m-ok">فهمت</button></div>');
+        $('m-ok').addEventListener('click', closeModal);
+      });
+    });
+  }
+
   // ---------- boot ----------
   function boot() {
     var qs = new URLSearchParams(location.search);
@@ -513,14 +578,16 @@
       if (qs.get('battle') === '1') {
         var entries = AI.genMap(MAP_SEED, state.name).filter(function (e2) { return e2.kind === 'ai'; });
         var en = entries[0];
-        startBattle(en, AI.genVillage(en.villageSeed, en.palaceLvl));
+        startBattle(en, AI.genVillage(en.villageSeed, en.palaceLvl, en.arch));
       }
+      netBoot();
       return;
     }
     if (load() && state && state.name) {
       E.tick(state);
       showScreen('village');
       switchTab('village');
+      netBoot();
     } else {
       showScreen('start');
     }
@@ -531,6 +598,7 @@
     save();
     showScreen('village');
     switchTab('village');
+    netBoot();
     toast('أهلاً يا ' + name + '! 🏰');
   });
   $('input-name').addEventListener('keydown', function (e) {
