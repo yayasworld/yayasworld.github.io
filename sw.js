@@ -1,4 +1,4 @@
-const V = 'yw-main-MZIBV2AQ.js-1795812319477';
+const V = 'yw-main-MZIBV2AQ.js-1795813329798';
 const SHELL = ["./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png","./index.html","./main-2GLFNUZN.css","./main-MZIBV2AQ.js","./manifest.webmanifest"];
 self.addEventListener('install', (e) => {
     self.skipWaiting();
