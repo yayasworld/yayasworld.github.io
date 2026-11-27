@@ -17,6 +17,7 @@
       <p class="start-tag">ابنِ قريتك، درّب جيشك، واغزُ الخريطة</p>
       <input id="input-name" maxlength="16" placeholder="اسم قائدك..." autocomplete="off">
       <button id="btn-start" class="btn btn-primary">ابدأ الغزو</button>
+      <p class="muted" style="margin-top:18px;font-size:12px"><a href="privacy.html" target="_blank" style="color:#1d3a63">سياسة الخصوصية</a></p>
     </div>
   </div>
 
@@ -49,7 +50,7 @@
   <!-- الخريطة -->
   <main id="screen-map" class="screen hidden page">
     <h2>خريطة الممالك</h2>
-    <p class="hint">اغزُ ممالك تانية وانهب مواردها. قريباً: ممالك لاعبين حقيقيين.</p>
+    <p class="hint">اغزُ ممالك الذكاء الاصطناعي ولاعبين حقيقيين وانهب مواردها. اللاعبين الجدد تحت حماية ٢٤ ساعة 🛡️</p>
     <div id="map-list"></div>
   </main>
 
@@ -60,12 +61,49 @@
     <div id="mission-list"></div>
   </main>
 
+
+  <!-- الأصدقاء -->
+  <main id="screen-friends" class="screen hidden page">
+    <h2>الأصدقاء 👥</h2>
+    <div class="card">
+      <b>كود الصداقة بتاعك</b>
+      <div class="muted">ابعته لصاحبك عشان يضيفك</div>
+      <div class="friend-code" id="my-code">...</div>
+      <button class="btn btn-small" id="btn-copy-code">نسخ الكود 📋</button>
+    </div>
+    <div class="card">
+      <b>ضيف صديق</b>
+      <input id="input-friend-code" maxlength="40" placeholder="الصق كود صاحبك هنا" autocomplete="off" dir="ltr">
+      <button class="btn btn-small btn-primary" id="btn-add-friend">إرسال طلب صداقة</button>
+    </div>
+    <h3>طلبات الصداقة</h3>
+    <div id="request-list"><p class="muted">مفيش طلبات</p></div>
+    <h3>أصدقائي</h3>
+    <div id="friend-list"><p class="muted">لسه مفيش أصدقاء</p></div>
+  </main>
+
+  <!-- الدردشة -->
+  <main id="screen-chat" class="screen hidden">
+    <div id="chat-head">
+      <button class="btn btn-small" id="btn-chat-back">رجوع</button>
+      <b id="chat-name">صديق</b>
+      <button class="btn btn-small" id="btn-chat-report" title="إبلاغ">🚩</button>
+      <button class="btn btn-small" id="btn-chat-block" title="حظر">🚫</button>
+    </div>
+    <div id="chat-msgs"></div>
+    <div id="chat-input-row">
+      <input id="input-chat" maxlength="500" placeholder="اكتب رسالة..." autocomplete="off">
+      <button class="btn btn-small btn-primary" id="btn-chat-send">إرسال</button>
+    </div>
+  </main>
+
   <!-- التنقل -->
   <nav id="tabbar" class="hidden">
     <button class="tab" data-tab="village">🏰<span>القرية</span></button>
     <button class="tab" data-tab="army">⚔️<span>الجيش</span></button>
     <button class="tab" data-tab="map">🗺️<span>الخريطة</span></button>
     <button class="tab" data-tab="missions">📜<span>المهام</span></button>
+    <button class="tab" data-tab="friends">👥<span>الأصدقاء</span></button>
   </nav>
 
   <!-- المعركة -->

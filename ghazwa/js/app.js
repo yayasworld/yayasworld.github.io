@@ -495,12 +495,12 @@
 
   // ---------- navigation ----------
   function showScreen(name) {
-    ['start', 'village', 'army', 'map', 'missions', 'battle'].forEach(function (s) {
-      $('screen-' + s).classList.toggle('hidden', s !== name);
+    ['start', 'village', 'army', 'map', 'missions', 'friends', 'chat', 'battle'].forEach(function (s) {
+      var el = $('screen-' + s); if (el) el.classList.toggle('hidden', s !== name);
     });
     $('hud').classList.toggle('hidden', name === 'start' || name === 'battle');
     $('hud-frieze').classList.toggle('hidden', name === 'start' || name === 'battle');
-    $('tabbar').classList.toggle('hidden', name === 'start' || name === 'battle');
+    $('tabbar').classList.toggle('hidden', name === 'start' || name === 'battle' || name === 'chat');
   }
   function switchTab(name) {
     tab = name;
@@ -531,7 +531,153 @@
     else if (tab === 'army') renderArmy();
     else if (tab === 'map') renderMap();
     else if (tab === 'missions') renderMissions();
+    else if (tab === 'friends') renderFriends();
   }
+
+  // ---------- social: age gate, friends, chat ----------
+  var chatWith = null, chatOff = null;
+
+  function ageGate(cb) {
+    if (state.ageGate) { cb(); return; }
+    var html = '<h3>منطقة الأصدقاء والدردشة 🔞</h3>' +
+      '<p>المحادثات هنا بين لاعبين حقيقيين. لازم يكون عمرك 18 سنة أو أكثر.</p>' +
+      '<label class="terms-line"><input type="checkbox" id="m-terms"> أوافق على شروط الدردشة: ' + D.CHAT_TERMS + '</label>' +
+      '<p class="muted"><a href="privacy.html" target="_blank" style="color:var(--ph-lapis,#1d3a63)">سياسة الخصوصية</a></p>' +
+      '<div class="modal-actions">' +
+      '<button class="btn btn-primary" id="m-age-ok">عمري 18+ وأوافق</button>' +
+      '<button class="btn" id="m-age-no">رجوع</button></div>';
+    openModal(html);
+    $('m-age-ok').addEventListener('click', function () {
+      if (!$('m-terms').checked) { toast('لازم توافق على الشروط الأول'); return; }
+      state.ageGate = true; save(); closeModal(); cb();
+    });
+    $('m-age-no').addEventListener('click', function () { closeModal(); switchTab('village'); });
+  }
+
+  function renderFriends() {
+    if (!NET || !NET.isReady()) {
+      $('my-code').textContent = 'الأونلاين مش متاح دلوقتي';
+      return;
+    }
+    $('my-code').textContent = NET.myCode();
+    NET.listRequests(function (reqs) {
+      var el = $('request-list');
+      el.innerHTML = reqs.length ? '' : '<p class="muted">مفيش طلبات</p>';
+      reqs.forEach(function (r) {
+        var c = document.createElement('div');
+        c.className = 'card';
+        c.innerHTML = '<div class="grow"><b>' + r.name + '</b><div class="muted">عاوز يضيفك</div></div>' +
+          '<button class="btn btn-small btn-primary">قبول</button> <button class="btn btn-small">رفض</button>';
+        var btns = c.querySelectorAll('button');
+        btns[0].addEventListener('click', function () {
+          NET.acceptRequest(r.from, r.name, state.name, function (ok) {
+            toast(ok ? 'بقيتوا أصدقاء! 👥' : 'حصل خطأ'); renderFriends();
+          });
+        });
+        btns[1].addEventListener('click', function () {
+          NET.declineRequest(r.from, function () { renderFriends(); });
+        });
+        el.appendChild(c);
+      });
+    });
+    NET.listFriends(function (friends) {
+      var el = $('friend-list');
+      el.innerHTML = friends.length ? '' : '<p class="muted">لسه مفيش أصدقاء</p>';
+      friends.forEach(function (f) {
+        var c = document.createElement('div');
+        c.className = 'card';
+        c.innerHTML = '<span class="k-emoji">👤</span><div class="grow"><b>' + f.name + '</b></div>' +
+          '<button class="btn btn-small btn-gold">دردشة 💬</button>';
+        c.querySelector('button').addEventListener('click', function () { openChat(f); });
+        el.appendChild(c);
+      });
+    });
+  }
+
+  function openChat(f) {
+    chatWith = f;
+    $('chat-name').textContent = f.name;
+    switchTab('chat');
+    if (chatOff) chatOff();
+    chatOff = NET.onChat(f.uid, function (msgs, myUid) {
+      var el = $('chat-msgs');
+      el.innerHTML = msgs.length ? '' : '<p class="muted">ابدأوا الكلام 👋</p>';
+      msgs.forEach(function (m) {
+        var d = document.createElement('div');
+        d.className = 'bubble' + (m.from === myUid ? ' me' : '');
+        d.textContent = D.filterText(m.text);
+        el.appendChild(d);
+      });
+      el.scrollTop = el.scrollHeight;
+    });
+  }
+
+  $('btn-chat-back').addEventListener('click', function () {
+    if (chatOff) { chatOff(); chatOff = null; }
+    chatWith = null;
+    switchTab('friends');
+  });
+  $('btn-chat-send').addEventListener('click', function () {
+    var t = ($('input-chat').value || '').trim();
+    if (!t || !chatWith) return;
+    $('input-chat').value = '';
+    NET.sendChat(chatWith.uid, D.filterText(t), function (ok) {
+      if (!ok) toast('الرسالة مبعتتش — ممكن تكون محظور أو الصداقة اتلغت');
+    });
+  });
+  $('input-chat').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') $('btn-chat-send').click();
+  });
+  $('btn-chat-report').addEventListener('click', function () {
+    if (!chatWith) return;
+    openModal('<h3>إبلاغ 🚩</h3><p>هيتسجل بلاغ عن ' + chatWith.name + ' ويتمراجع.</p>' +
+      '<div class="modal-actions"><button class="btn btn-danger" id="m-rep-ok">تأكيد البلاغ</button>' +
+      '<button class="btn" id="m-rep-no">إلغاء</button></div>');
+    $('m-rep-ok').addEventListener('click', function () {
+      NET.reportUser(chatWith.uid, 'chat-abuse', function () { closeModal(); toast('وصل البلاغ، شكراً 🚩'); });
+    });
+    $('m-rep-no').addEventListener('click', closeModal);
+  });
+  $('btn-chat-block').addEventListener('click', function () {
+    if (!chatWith) return;
+    openModal('<h3>حظر 🚫</h3><p>حظر ' + chatWith.name + ' هيلغي الصداقة ويمنع رسايله.</p>' +
+      '<div class="modal-actions"><button class="btn btn-danger" id="m-blk-ok">حظر</button>' +
+      '<button class="btn" id="m-blk-no">إلغاء</button></div>');
+    $('m-blk-ok').addEventListener('click', function () {
+      NET.blockUser(chatWith.uid, function () {
+        closeModal();
+        if (chatOff) { chatOff(); chatOff = null; }
+        chatWith = null;
+        toast('اتحظر 🚫');
+        switchTab('friends');
+      });
+    });
+    $('m-blk-no').addEventListener('click', closeModal);
+  });
+  $('btn-copy-code').addEventListener('click', function () {
+    var code = NET && NET.isReady() ? NET.myCode() : '';
+    if (!code) return;
+    if (navigator.clipboard) navigator.clipboard.writeText(code).then(function () { toast('الكود اتنسخ 📋'); });
+    else toast(code);
+  });
+  $('btn-add-friend').addEventListener('click', function () {
+    var code = ($('input-friend-code').value || '').trim();
+    if (!code) return;
+    if (!NET || !NET.isReady()) { toast('الأونلاين مش متاح'); return; }
+    NET.sendFriendRequest(code, state.name, function (r) {
+      if (r.ok) { toast('الطلب اتبعت لـ ' + (r.toName || 'اللاعب') + ' ✅'); $('input-friend-code').value = ''; }
+      else if (r.err === 'no-player') toast('الكود ده مش للاعب موجود');
+      else if (r.err === 'bad') toast('كود غلط');
+      else toast('مقدرش أبعت الطلب دلوقتي');
+    });
+  });
+
+  // wrap switchTab so the friends tab passes the age gate first
+  var origSwitchTab = switchTab;
+  switchTab = function (name) {
+    if (name === 'friends') { ageGate(function () { origSwitchTab(name); }); return; }
+    origSwitchTab(name);
+  };
 
   setInterval(function () {
     if (!state || battle) return;

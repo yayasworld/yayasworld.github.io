@@ -103,12 +103,32 @@
   ];
   var DAILY_MISSIONS = 3;
 
+  // Chat word filter (store UGC policy). Masked with ★★★ on send and display.
+  var BANNED_WORDS = [
+    'كسخت', 'كسم', 'زب', 'عرص', 'شرموط', 'قحب', 'منيوك', 'خول', 'متناك', 'لبوة', 'عاهر',
+    'ابن الكلب', 'ابن الشرموطة', 'ابن المتناكة', 'يا كلب', 'يا حيوان',
+    'a7a', 'kos ', 'kosom', 'zby', 'sharmota', 'sharmout', 'manyak', 'manyak', 'khawal', 'kawad', 'ya kalb', 'ya hmar', 'metnak', '3ars', '2a7ba',
+    'fuck', 'shit', 'bitch', 'cunt', 'dick', 'pussy', 'whore', 'slut', 'nigger', 'faggot', 'bastard', 'asshole'
+  ];
+
+  function filterText(t) {
+    var out = String(t || '');
+    BANNED_WORDS.forEach(function (w) {
+      var re = new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      out = out.replace(re, '★★★');
+    });
+    return out;
+  }
+
+  var CHAT_TERMS = 'ممنوع الإهانة أو التحرش أو التهديد أو العنصرية أو المحتوى الجنسي أو السبام أو النصب في الدردشة. مخالفة الشروط تعرضك للحظر. تقدر تبلّغ عن أي رسالة أو تحظر أي لاعب.';
+
   // Grid: 16x16 village. Palace footprint 3x3 at center.
   var GRID = 16;
 
   var DATA = {
     BUILDINGS: BUILDINGS, TROOPS: TROOPS,
     MISSION_POOL: MISSION_POOL, DAILY_MISSIONS: DAILY_MISSIONS,
+    BANNED_WORDS: BANNED_WORDS, filterText: filterText, CHAT_TERMS: CHAT_TERMS,
     GRID: GRID,
     START: { gold: 800, food: 600, coins: 20 },
     BASE_CAP: 1500,          // resource cap before storage buildings

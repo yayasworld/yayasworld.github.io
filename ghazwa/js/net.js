@@ -102,10 +102,99 @@
     }).catch(function () { cb([]); });
   }
 
+  // ---------- social: friends, chat, block, report ----------
+  function myCode() { return uid; }
+
+  function chatIdWith(other) { return [uid, other].sort().join('_'); }
+
+  function sendFriendRequest(toUid, myName, cb) {
+    if (!ready || !toUid || toUid === uid) { cb && cb({ ok: false, err: 'bad' }); return; }
+    db.ref('villages/' + toUid + '/name').once('value').then(function (s) {
+      if (!s.exists()) { cb && cb({ ok: false, err: 'no-player' }); return; }
+      db.ref('friend_requests/' + toUid + '/' + uid).set({
+        name: myName || 'لاعب', ts: firebase.database.ServerValue.TIMESTAMP
+      }).then(function () { cb && cb({ ok: true, toName: s.val() }); })
+        .catch(function () { cb && cb({ ok: false, err: 'denied' }); });
+    }).catch(function () { cb && cb({ ok: false, err: 'net' }); });
+  }
+
+  function listRequests(cb) {
+    if (!ready) { cb([]); return; }
+    db.ref('friend_requests/' + uid).once('value').then(function (snap) {
+      var out = [];
+      snap.forEach(function (c) { out.push({ from: c.key, name: (c.val() && c.val().name) || 'لاعب', ts: (c.val() && c.val().ts) || 0 }); });
+      cb(out);
+    }).catch(function () { cb([]); });
+  }
+
+  function acceptRequest(fromUid, fromName, myName, cb) {
+    if (!ready) { cb && cb(false); return; }
+    var up = {};
+    up['friends/' + uid + '/' + fromUid] = { name: fromName || 'لاعب', ts: firebase.database.ServerValue.TIMESTAMP };
+    up['friends/' + fromUid + '/' + uid] = { name: myName || 'لاعب', ts: firebase.database.ServerValue.TIMESTAMP };
+    up['friend_requests/' + uid + '/' + fromUid] = null;
+    db.ref().update(up).then(function () { cb && cb(true); }).catch(function () { cb && cb(false); });
+  }
+
+  function declineRequest(fromUid, cb) {
+    if (!ready) { cb && cb(false); return; }
+    db.ref('friend_requests/' + uid + '/' + fromUid).remove()
+      .then(function () { cb && cb(true); }).catch(function () { cb && cb(false); });
+  }
+
+  function listFriends(cb) {
+    if (!ready) { cb([]); return; }
+    db.ref('friends/' + uid).once('value').then(function (snap) {
+      var out = [];
+      snap.forEach(function (c) { out.push({ uid: c.key, name: (c.val() && c.val().name) || 'لاعب' }); });
+      cb(out);
+    }).catch(function () { cb([]); });
+  }
+
+  function sendChat(otherUid, text, cb) {
+    if (!ready) { cb && cb(false); return; }
+    db.ref('chats/' + chatIdWith(otherUid)).push({
+      from: uid, text: String(text).slice(0, 500), ts: firebase.database.ServerValue.TIMESTAMP
+    }).then(function () { cb && cb(true); }).catch(function () { cb && cb(false); });
+  }
+
+  function onChat(otherUid, cb) {
+    if (!ready) return function () {};
+    var ref = db.ref('chats/' + chatIdWith(otherUid)).limitToLast(50);
+    var h = ref.on('value', function (snap) {
+      var out = [];
+      snap.forEach(function (c) { var m = c.val(); if (m) out.push({ from: m.from, text: m.text, ts: m.ts || 0 }); });
+      out.sort(function (a, b) { return a.ts - b.ts; });
+      cb(out, uid);
+    }, function () { cb([], uid); });
+    return function () { ref.off('value', h); };
+  }
+
+  function blockUser(otherUid, cb) {
+    if (!ready) { cb && cb(false); return; }
+    var up = {};
+    up['blocks/' + uid + '/' + otherUid] = true;
+    up['friends/' + uid + '/' + otherUid] = null;
+    db.ref().update(up).then(function () { cb && cb(true); }).catch(function () { cb && cb(false); });
+  }
+
+  function reportUser(otherUid, reason, cb) {
+    if (!ready) { cb && cb(false); return; }
+    db.ref('modreports').push({
+      reporter: uid, reported: otherUid, reason: String(reason).slice(0, 200),
+      ts: firebase.database.ServerValue.TIMESTAMP
+    }).then(function () { cb && cb(true); }).catch(function () { cb && cb(false); });
+  }
+
   global.GhazwaNet = {
     init: init, sync: sync, fetchKingdoms: fetchKingdoms,
     reportAttack: reportAttack, applyIncoming: applyIncoming,
     isReady: function () { return ready; },
-    getUid: function () { return uid; }
+    getUid: function () { return uid; },
+    myCode: myCode, chatIdWith: chatIdWith,
+    sendFriendRequest: sendFriendRequest, listRequests: listRequests,
+    acceptRequest: acceptRequest, declineRequest: declineRequest,
+    listFriends: listFriends, sendChat: sendChat, onChat: onChat,
+    blockUser: blockUser, reportUser: reportUser
   };
 })(typeof window !== 'undefined' ? window : this);
