@@ -1,5 +1,5 @@
-const V = 'yw-main-MZIBV2AQ.js-1795814775182';
-const SHELL = ["./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png","./index.html","./main-2GLFNUZN.css","./main-MZIBV2AQ.js","./manifest.webmanifest"];
+const V = 'yw-main-LYH5QWUE.js-1795815728158';
+const SHELL = ["./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png","./index.html","./main-LYH5QWUE.js","./main-PN73UGCT.css","./manifest.webmanifest"];
 self.addEventListener('install', (e) => {
     self.skipWaiting();
     e.waitUntil(caches.open(V).then((c) => c.addAll(SHELL)));
@@ -25,8 +25,10 @@ self.addEventListener('fetch', (e) => {
         caches.match(e.request).then(async (hit) => {
             const fresh = await fetch(e.request).catch(() => null);
             if (fresh && fresh.ok) {
-                const c = await caches.open(V);
-                c.put(e.request, fresh.clone());
+                if (e.request.mode === 'navigate' || SHELL.includes('./' + url.pathname.slice(1))) {
+                    const c = await caches.open(V);
+                    c.put(e.request, fresh.clone());
+                }
                 return fresh;
             }
             if (hit) return hit;
