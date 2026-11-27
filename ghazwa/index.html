@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>غزوة - ابنِ قريتك واحكم الخريطة</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- شاشة البداية -->
+  <div id="screen-start" class="screen hidden">
+    <div class="start-box">
+      <div class="start-logo">⚔️</div>
+      <h1>غزوة</h1>
+      <p class="start-tag">ابنِ قريتك، درّب جيشك، واغزُ الخريطة</p>
+      <input id="input-name" maxlength="16" placeholder="اسم قائدك..." autocomplete="off">
+      <button id="btn-start" class="btn btn-primary">ابدأ الغزو</button>
+    </div>
+  </div>
+
+  <!-- الهيدر -->
+  <header id="hud" class="hidden">
+    <div class="res"><span class="res-ic">🪙</span><span id="res-gold">0</span></div>
+    <div class="res"><span class="res-ic">🌾</span><span id="res-food">0</span></div>
+    <div class="res coins" id="btn-store"><span class="res-ic">💎</span><span id="res-coins">0</span><span class="plus">+</span></div>
+  </header>
+
+  <!-- القرية -->
+  <main id="screen-village" class="screen hidden">
+    <div id="village-wrap">
+      <div id="village-grid" dir="ltr"></div>
+    </div>
+    <div id="placement-banner" class="hidden">اختار مكان المبنى 👇 <button id="btn-cancel-place" class="btn btn-small">إلغاء</button></div>
+  </main>
+
+  <!-- الجيش -->
+  <main id="screen-army" class="screen hidden page">
+    <h2>الجيش</h2>
+    <div id="army-space" class="space-line"></div>
+    <div id="army-list"></div>
+    <h3>التدريب</h3>
+    <div id="train-queue"></div>
+    <div id="train-list"></div>
+  </main>
+
+  <!-- الخريطة -->
+  <main id="screen-map" class="screen hidden page">
+    <h2>خريطة الممالك</h2>
+    <p class="hint">اغزُ ممالك تانية وانهب مواردها. قريباً: ممالك لاعبين حقيقيين.</p>
+    <div id="map-list"></div>
+  </main>
+
+  <!-- المهام -->
+  <main id="screen-missions" class="screen hidden page">
+    <h2>مهام اليوم</h2>
+    <p class="hint">كمّل المهام واكسب كوينز مجانية 💎</p>
+    <div id="mission-list"></div>
+  </main>
+
+  <!-- التنقل -->
+  <nav id="tabbar" class="hidden">
+    <button class="tab" data-tab="village">🏰<span>القرية</span></button>
+    <button class="tab" data-tab="army">⚔️<span>الجيش</span></button>
+    <button class="tab" data-tab="map">🗺️<span>الخريطة</span></button>
+    <button class="tab" data-tab="missions">📜<span>المهام</span></button>
+  </nav>
+
+  <!-- المعركة -->
+  <div id="screen-battle" class="screen hidden">
+    <div id="battle-head">
+      <span id="battle-title">الغزوة</span>
+      <span id="battle-timer">90</span>
+    </div>
+    <div id="battle-wrap"><div id="battle-grid" dir="ltr"></div></div>
+    <div id="battle-foot"><div id="battle-pct">0%</div></div>
+  </div>
+
+  <!-- النوافذ -->
+  <div id="modal-backdrop" class="hidden">
+    <div id="modal"></div>
+  </div>
+
+  <div id="toast" class="hidden"></div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
