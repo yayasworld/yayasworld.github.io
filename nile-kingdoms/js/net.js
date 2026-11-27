@@ -21,20 +21,40 @@
   var app = null, db = null, auth = null, uid = null, ready = false;
   var listeners = [];
 
+  var redirectError = null;
+
   function init(onReady) {
     if (!CONFIG || !global.firebase) { if (onReady) onReady(false); return; }
     try {
       app = firebase.initializeApp(CONFIG);
       auth = firebase.auth();
       db = firebase.database();
-      auth.signInAnonymously().then(function (cred) {
-        uid = cred.user.uid;
+      var done = false;
+      function finish(user) {
+        if (done || !user) return;
+        done = true;
+        uid = user.uid;
         ready = true;
         db.ref('players/' + uid).update({ lastActive: firebase.database.ServerValue.TIMESTAMP });
         if (onReady) onReady(true);
-      }).catch(function () { if (onReady) onReady(false); });
+      }
+      function anon() {
+        auth.signInAnonymously().then(function (cred) { finish(cred.user); })
+          .catch(function () { if (onReady) onReady(false); });
+      }
+      auth.getRedirectResult().then(function (res) {
+        if (res && res.user) { finish(res.user); return; }
+        if (auth.currentUser) { finish(auth.currentUser); return; }
+        anon();
+      }).catch(function (e) {
+        redirectError = (e && e.code) || 'err';
+        if (auth.currentUser) { finish(auth.currentUser); return; }
+        anon();
+      });
     } catch (e) { if (onReady) onReady(false); }
   }
+
+  function takeRedirectError() { var e = redirectError; redirectError = null; return e; }
 
   function villageSnapshot(state, D, E) {
     return {
@@ -108,19 +128,13 @@
   function signInGoogle(cb) {
     if (!auth) { cb && cb(false, 'net'); return; }
     var provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).then(function (cred) {
-      uid = cred.user.uid; ready = true;
-      db.ref('players/' + uid).update({ lastActive: firebase.database.ServerValue.TIMESTAMP });
-      cb && cb(true);
-    }).catch(function (e) { cb && cb(false, (e && e.code) || 'err'); });
+    auth.signInWithRedirect(provider).catch(function (e) { cb && cb(false, (e && e.code) || 'err'); });
   }
 
   function linkGoogle(cb) {
     if (!auth || !auth.currentUser) { cb && cb(false, 'net'); return; }
     var provider = new firebase.auth.GoogleAuthProvider();
-    auth.currentUser.linkWithPopup(provider).then(function () {
-      cb && cb(true);
-    }).catch(function (e) { cb && cb(false, (e && e.code) || 'err'); });
+    auth.currentUser.linkWithRedirect(provider).catch(function (e) { cb && cb(false, (e && e.code) || 'err'); });
   }
 
   function isAnonymous() { return auth && auth.currentUser ? auth.currentUser.isAnonymous : true; }
@@ -239,6 +253,7 @@
     listFriends: listFriends, sendChat: sendChat, onChat: onChat,
     blockUser: blockUser, reportUser: reportUser,
     signInGoogle: signInGoogle, linkGoogle: linkGoogle, isAnonymous: isAnonymous,
+    takeRedirectError: takeRedirectError,
     onRequests: onRequests, onFriends: onFriends
   };
 })(typeof window !== 'undefined' ? window : this);

@@ -711,6 +711,9 @@
     if (!NET) return;
     NET.init(function (okNet) {
       if (!okNet) return;
+      var rerr = NET.takeRedirectError ? NET.takeRedirectError() : null;
+      if (rerr === 'auth/credential-already-in-use') toast('حساب جوجل ده مربوط بلاعب تاني');
+      else if (rerr) toast('التسجيل بجوجل مكمّلش، جرّب تاني');
       save();
       NET.applyIncoming(state, function (reports) {
         if (!reports.length) return;
@@ -771,19 +774,19 @@
   });
   $('btn-google').addEventListener('click', function () {
     if (!NET || !NET.isReady()) { toast('الأونلاين مش متاح دلوقتي، جرّب كضيف'); return; }
-    NET.signInGoogle(function (ok, err) {
-      if (ok) toast('سجّلت بجوجل ✓ اكتب اسم قائدك وابدأ');
-      else if (err !== 'auth/popup-closed-by-user') toast('التسجيل بجوجل مفعّلش، جرّب تاني');
+    toast('جاري تحويلك لجوجل...');
+    NET.signInGoogle(function (ok) {
+      if (!ok) toast('التسجيل بجوجل مفعّلش، جرّب تاني');
     });
   });
   $('btn-link-google').addEventListener('click', function () {
     if (!NET || !NET.isReady()) return;
-    NET.linkGoogle(function (ok, err) {
-      if (ok) { toast('اتربط حسابك بجوجل ✓ تقدر تكمل على أي جهاز'); $('btn-link-google').classList.add('hidden'); }
-      else if (err === 'auth/credential-already-in-use') toast('حساب جوجل ده مربوط بلاعب تاني');
-      else if (err !== 'auth/popup-closed-by-user') toast('الربط مفعّلش، جرّب تاني');
+    toast('جاري تحويلك لجوجل...');
+    NET.linkGoogle(function (ok) {
+      if (!ok) toast('الربط مفعّلش، جرّب تاني');
     });
   });
+
 
   boot();
 })();
