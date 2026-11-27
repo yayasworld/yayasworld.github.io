@@ -1,4 +1,4 @@
-const V = 'yw-main-MZIBV2AQ.js-1795813393936';
+const V = 'yw-main-MZIBV2AQ.js-1795813567584';
 const SHELL = ["./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png","./index.html","./main-2GLFNUZN.css","./main-MZIBV2AQ.js","./manifest.webmanifest"];
 self.addEventListener('install', (e) => {
     self.skipWaiting();
@@ -10,7 +10,7 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
     const url = new URL(e.request.url);
     if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
-    if (url.pathname === '/ghazwa' || url.pathname.startsWith('/ghazwa/')) return;
+    if (url.pathname === '/ghazwa' || url.pathname.startsWith('/ghazwa/') || url.pathname === '/nile-kingdoms' || url.pathname.startsWith('/nile-kingdoms/')) return;
     if (url.pathname.includes('/assets/')) {
         e.respondWith(caches.open(V).then(async (c) => {
             const hit = await c.match(e.request);
