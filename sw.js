@@ -1,4 +1,4 @@
-const V = 'yw-main-IFXHN4HH.js-1795869171517';
+const V = 'yw-main-IFXHN4HH.js-1795869545490';
 const SHELL = ["./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png","./index.html","./main-IFXHN4HH.js","./main-Q3GC74EK.css","./manifest.webmanifest"];
 self.addEventListener('install', (e) => {
     self.skipWaiting();
