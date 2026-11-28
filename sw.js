@@ -1,5 +1,5 @@
-const V = 'yw-main-NEVTJJ4Y.js-1795862596365';
-const SHELL = ["./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png","./index.html","./main-NEVTJJ4Y.js","./main-PN73UGCT.css","./manifest.webmanifest"];
+const V = 'yw-main-64T6JN4P.js-1795863981479';
+const SHELL = ["./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png","./index.html","./main-64T6JN4P.js","./main-PN73UGCT.css","./manifest.webmanifest"];
 self.addEventListener('install', (e) => {
     self.skipWaiting();
     e.waitUntil(caches.open(V).then((c) => c.addAll(SHELL)));
