@@ -1,4 +1,4 @@
-const V = 'yw-main-VCHRCKMG.js-1795869735575';
+const V = 'yw-main-VCHRCKMG.js-1795869927690';
 const SHELL = ["./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png","./index.html","./main-Q3GC74EK.css","./main-VCHRCKMG.js","./manifest.webmanifest"];
 self.addEventListener('install', (e) => {
     self.skipWaiting();
